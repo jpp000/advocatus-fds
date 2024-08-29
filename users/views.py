@@ -1,9 +1,42 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse
+from django.contrib.auth.models import User
+from django.contrib import messages
+from django.contrib.messages import constants
 
 # Create your views here.
 def register(req):
-    return render(req, 'register.html')
+    if req.method == 'GET':
+        return render(req, 'register.html')
+    elif req.method == 'POST':
+        username = req.POST.get('username')
+        email = req.POST.get('email')
+        password = req.POST.get('password')
+        confirm_password = req.POST.get('confirm-password')
+
+        if len(password) < 6:
+            messages.add_message(req, constants.ERROR, "As senhas precisam ter no minimo 6 digitos")
+            return redirect('/users/register')
+        
+        if password != confirm_password:
+            messages.add_message(req, constants.ERROR, "As senhas não coincidem")
+            return redirect('/users/register')
+
+        users = User.objects.filter(username=username)
+
+        if users.exists():
+            messages.add_message(req, constants.ERROR, "Usuario já cadastrado")
+            return redirect('/users/register')
+
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password
+        )
+
+        User.save(user)
+
+        return redirect('/users/login')
 
 
 def login(req):
