@@ -3,6 +3,8 @@ from django.http import HttpResponse
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.messages import constants
+from django.contrib import auth
+
 
 # Create your views here.
 def register(req):
@@ -40,4 +42,16 @@ def register(req):
 
 
 def login(req):
-    return render(req, 'login.html')
+    if req.method == 'GET':
+        return render(req, 'login.html')
+    elif req.method == 'POST':
+        username, email, password = req.POST.get('username'), req.POST.get('email'), req.POST.get('password')
+
+        user = auth.authenticate(req, username=username, email=email, password=password)
+        if user:
+            auth.login(req, user)
+            return HttpResponse('home')
+            # return redirect('/') -- HOME
+        
+        messages.add_message(req, constants.ERROR, 'Usuário ou senha inválidos')
+        return redirect('/users/login')
